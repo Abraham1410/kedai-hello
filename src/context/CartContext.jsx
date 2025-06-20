@@ -1,34 +1,50 @@
+// src/context/CartContext.jsx
 import PropTypes from "prop-types";
 import { createContext, useState } from "react";
 
-// Membuat context
 export const CartContext = createContext();
 
-// Provider untuk membungkus seluruh aplikasi
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
 
-  // Menambahkan item ke keranjang
   const addToCart = (item) => {
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find((i) => i.id === item.id);
+      const existingItem = prevItems.find(
+        (i) => i.id === item.id && i.type === item.type
+      );
       if (existingItem) {
-        // Jika item sudah ada, tambahkan quantity
         return prevItems.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.id === item.id && i.type === item.type
+            ? { ...i, quantity: i.quantity + 1 }
+            : i
         );
       }
-      // Jika item belum ada, tambahkan ke cart dengan quantity 1
       return [...prevItems, { ...item, quantity: 1 }];
     });
   };
 
-  // Menghapus item dari keranjang
-  const removeFromCart = (id) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
+  const decreaseQuantity = (id, type) => {
+    setCartItems((prevItems) =>
+      prevItems
+        .map((item) =>
+          item.id === id && item.type === type
+            ? { ...item, quantity: item.quantity - 1 }
+            : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
   };
 
-  // Mendapatkan total harga seluruh item
+  const removeFromCart = (id, type) => {
+    setCartItems((prevItems) =>
+      prevItems.filter((item) => item.id !== id || item.type !== type)
+    );
+  };
+
+  const getCartCount = () => {
+    return cartItems.reduce((total, item) => total + item.quantity, 0);
+  };
+
   const getTotalPrice = () => {
     return cartItems.reduce(
       (total, item) => total + item.price * item.quantity,
@@ -36,21 +52,22 @@ export const CartProvider = ({ children }) => {
     );
   };
 
-  // Mendapatkan total jumlah item (untuk ditampilkan di ikon keranjang)
-  const getCartCount = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
-  };
-
   return (
     <CartContext.Provider
-      value={{ cartItems, addToCart, removeFromCart, getTotalPrice, getCartCount }}
+      value={{
+        cartItems,
+        addToCart,
+        removeFromCart,
+        decreaseQuantity,
+        getCartCount,
+        getTotalPrice,
+      }}
     >
       {children}
     </CartContext.Provider>
   );
 };
 
-// Validasi props children
 CartProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };

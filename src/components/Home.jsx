@@ -21,9 +21,8 @@ const Home = () => {
           Tingkatkan produktivitas Anda dan bangkitkan suasana hati Anda dengan segelas kopi di pagi hari
         </p>
 
-        <div className="flex flex-row gap-6">
-          <Button title="ADD TO CART" />
-          <Button title="MORE MENU" />
+        <div className="flex flex-row gap-6 ">
+          <Button title="MENU" />
         </div>
       </div>
 

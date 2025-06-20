@@ -1,19 +1,58 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
 import ReviewCard from "../layouts/ReviewCard";
-import img1 from "../assets/img/pic1.png";
-import img2 from "../assets/img/pic2.png";
-import img3 from "../assets/img/pic3.png";
+import ReviewForm from "../components/ReviewForm";
+import { useKeenSlider } from "keen-slider/react";
+import "keen-slider/keen-slider.min.css";
 
 const Review = () => {
-  return (
-    <div className=" min-h-screen flex flex-col justify-center lg:px-32 px-5 bg-backgroundColor ">
-      <h1 className=" font-semibold text-center text-4xl lg:mt-14 mt-24 ">
-        Review Pelanggan
-      </h1>
+  const [reviews, setReviews] = useState([]);
 
-      <div className=" flex flex-col lg:flex-row gap-5 justify-center py-4 my-8">
-        <ReviewCard img={img1} title="Danar" />
-        <ReviewCard img={img2} title="Acil" />
-        <ReviewCard img={img3} title="Impanci" />
+  const fetchReviews = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/reviews");
+      const sortedReviews = res.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setReviews(sortedReviews.slice(0, 3)); 
+    } catch (err) {
+      console.error("Gagal ambil review:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  // inisialisasi keen-slider
+  const [sliderRef] = useKeenSlider({
+    loop: true,
+    slides: {
+      perView: 1,
+      spacing: 15,
+    },
+    autoplay: {
+      delay: 3000,
+      pauseOnMouseEnter: true,
+    },
+  });
+
+  return (
+    <div className="min-h-screen bg-backgroundColor px-5 lg:px-32 py-16">
+      <h1 className="text-4xl font-bold text-center mb-12 text-black">Review Pelanggan</h1>
+
+      {/* Form */}
+      <ReviewForm onSubmitSuccess={fetchReviews} />
+
+      {/* Review Cards */}
+      <div ref={sliderRef} className="keen-slider mt-10">
+        {reviews.map((item, index) => (
+          <div key={index} className="keen-slider__slide flex justify-center">
+            <ReviewCard
+              title={item.name}
+              message={item.comment}
+              rating={item.rating}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );

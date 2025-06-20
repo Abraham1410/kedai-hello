@@ -1,88 +1,126 @@
 import { useState, useContext } from "react";
-import { Link as ScrollLink } from "react-scroll";
-import { Link as RouterLink } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { SiCoffeescript } from "react-icons/si";
 import { AiOutlineMenuUnfold, AiOutlineClose } from "react-icons/ai";
 import { FaShoppingCart } from "react-icons/fa";
 import { CartContext } from "../context/CartContext";
+import CartDropdown from "../components/CartDropdown";
 
 const Navbar = () => {
   const [menu, setMenu] = useState(false);
+  const [showCart, setShowCart] = useState(false);
   const { getCartCount } = useContext(CartContext);
   const cartCount = getCartCount();
 
-  const handleChange = () => {
-    setMenu(!menu);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleScrollTo = (sectionId) => {
+    if (location.pathname !== "/") {
+      navigate("/", { state: { scrollTo: sectionId } });
+    } else {
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+      }
+    }
   };
 
-  const closeMenu = () => {
-    setMenu(false);
+  const handleMenuToggle = () => setMenu(!menu);
+  const closeMenu = () => setMenu(false);
+
+  const toggleCart = (e) => {
+    e.preventDefault();
+    setShowCart(!showCart);
   };
 
   return (
-    <div className="fixed w-full z-10">
+    <div className="fixed w-full z-50">
       <div className="flex flex-row justify-between p-5 lg:px-32 px-5 bg-gradient-to-r from-backgroundColor to-brightColor shadow-[0_3px_10px_rgb(0,0,0,0.2)]">
-        {/* Kiri - Logo */}
+        {/* Logo */}
         <div className="flex flex-row items-center cursor-pointer gap-2">
           <SiCoffeescript size={25} />
           <h1 className="text-xl font-semibold">Hello Coffee</h1>
         </div>
 
-        {/* Tengah - Navigasi */}
+        {/* Desktop Menu */}
         <nav className="hidden md:flex flex-row items-center text-lg font-medium gap-8">
-          {["home", "menu", "about", "products", "review"].map((item) => (
-            <ScrollLink
+          {["home", "menu", "about", "review"].map((item) => (
+            <span
               key={item}
-              to={item}
-              spy={true}
-              smooth={true}
-              duration={500}
+              onClick={() => handleScrollTo(item)}
               className="group relative inline-block cursor-pointer hover:text-brightColor"
             >
               {item.charAt(0).toUpperCase() + item.slice(1)}
               <span className="absolute inset-x-0 bottom-0 h-0.5 bg-black transform scale-x-0 origin-left transition-transform group-hover:scale-x-100"></span>
-            </ScrollLink>
+            </span>
           ))}
         </nav>
 
-        {/* Kanan - Keranjang & Menu Toggle */}
-        <div className="flex items-center gap-4">
-          <RouterLink to="/checkout" className="relative">
+        {/* Keranjang & Toggle Menu */}
+        <div className="flex items-center gap-4 relative">
+          <a href="#" onClick={toggleCart} className="relative">
             <FaShoppingCart size={22} className="text-white hover:text-brightColor cursor-pointer" />
             {cartCount > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                 {cartCount}
               </span>
             )}
-          </RouterLink>
+          </a>
+
+          {/* Dropdown Keranjang */}
+          {showCart && (
+            <div className="absolute right-0 top-10 z-50">
+              <CartDropdown />
+              <button
+                onClick={() => {
+                  setShowCart(false);
+                  navigate("/checkout");
+                }}
+                className="block text-center mt-2 text-sm text-white bg-brightColor hover:bg-orange-700 px-3 py-1 rounded-md"
+              >
+                Lihat Checkout
+              </button>
+            </div>
+          )}
+
+          {/* Toggle Mobile */}
           <div className="md:hidden">
             {menu ? (
-              <AiOutlineClose size={25} onClick={handleChange} />
+              <AiOutlineClose size={25} onClick={handleMenuToggle} />
             ) : (
-              <AiOutlineMenuUnfold size={25} onClick={handleChange} />
+              <AiOutlineMenuUnfold size={25} onClick={handleMenuToggle} />
             )}
           </div>
         </div>
       </div>
 
       {/* Mobile Menu */}
-      <div className={`${menu ? "translate-x-0" : "-translate-x-full"} lg:hidden flex flex-col absolute bg-black text-white left-0 top-16 font-semibold text-2xl text-center pt-8 pb-4 gap-8 w-full h-fit transition-transform duration-300`}>
+      <div
+        className={`${menu ? "translate-x-0" : "-translate-x-full"
+          } lg:hidden flex flex-col absolute bg-black text-white left-0 top-16 font-semibold text-2xl text-center pt-8 pb-4 gap-8 w-full h-fit transition-transform duration-300`}
+      >
         {["home", "menu", "about", "products", "review"].map((item) => (
-          <ScrollLink
+          <span
             key={item}
-            to={item}
-            spy={true}
-            smooth={true}
-            duration={500}
+            onClick={() => {
+              handleScrollTo(item);
+              closeMenu();
+            }}
             className="hover:text-brightColor transition-all cursor-pointer"
-            onClick={closeMenu}
           >
             {item.charAt(0).toUpperCase() + item.slice(1)}
-          </ScrollLink>
+          </span>
         ))}
-        <RouterLink to="/checkout" className="hover:text-brightColor transition-all" onClick={closeMenu}>
+        <span
+          onClick={() => {
+            navigate("/checkout");
+            closeMenu();
+          }}
+          className="hover:text-brightColor transition-all cursor-pointer"
+        >
           Checkout
-        </RouterLink>
+        </span>
       </div>
     </div>
   );
